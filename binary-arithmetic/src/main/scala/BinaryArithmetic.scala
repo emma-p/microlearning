@@ -1,32 +1,28 @@
 case class Result(data: Array[Char], carry: Char)
-object BinaryArithmetic {
-  def sum(n1: Array[Char], n2: Array[Char]): Array[Char] = {
-    val totalSum = n1.reverse.zipWithIndex.foldLeft(Result(Array[Char](), '0')) { case (acc, (charAtN1, i)) => {
-      val charAtN2 = n2.reverse(i)
 
-      val bits = sumBits(charAtN1, charAtN2, acc.carry)
-      Result(acc.data :+ bits._1, bits._2)
-    }
-    }
-    if(totalSum.carry == '1') {
-      (totalSum.data :+ '1').reverse
-    } else {
-      totalSum.data.reverse
-    }
+object BinaryArithmetic {
+  def sum(n1: Array[Char], n2: Array[Char]): Option[Array[Char]] = {
+    if (isBinary(n1 ++ n2)) {
+      val totalSum = n1.zip(n2).foldRight(Result(Array[Char](), '0')) { case ((charAtN1, charAtN2), acc) => {
+        val bits = sumBits(charAtN1, charAtN2, acc.carry)
+        Result(bits._1 +: acc.data, bits._2)
+      } }
+      if(totalSum.carry == '1') {
+        Some('1' +: totalSum.data)
+      } else {
+        Some(totalSum.data)
+      }
+    } else None
   }
 
   def sumBits(c1: Char, c2: Char, carry: Char): (Char, Char) = {
-    (c1, c2, carry) match {
-      case ('1', '0', '0') => ('1', '0')
-      case ('1', '0', '1') => ('0', '1')
-      case ('0', '1', '0') => ('1', '0')
-      case ('0', '1', '1') => ('0', '1')
-      case ('0', '0', '0') => ('0', '0')
-      case ('0', '0', '1') => ('1', '0')
-      case ('1', '1', '0') => ('0', '1')
-      case ('1', '1', '1') => ('1', '1')
+    charToInt(c1) + charToInt(c2) + charToInt(carry) match {
+      case 0 => ('0', '0')
+      case 1 => ('1', '0')
+      case 2 => ('0', '1')
+      case 3 => ('1', '1')
+      case _ => throw new IllegalStateException
     }
-
   }
 
 
@@ -34,5 +30,12 @@ object BinaryArithmetic {
     number.reverse.zipWithIndex.foldLeft(0.0) { case (result, (c, i)) =>
       result + (Integer.parseInt(c.toString) * Math.pow(2, i))
     }
+  }
+
+  private def charToInt(c: Char): Int = {
+    Integer.parseInt(c.toString)
+  }
+  private def isBinary(n: Array[Char]): Boolean = {
+    n.filterNot(c => c == '1' || c == '0').isEmpty
   }
 }
