@@ -7,17 +7,12 @@ object SemigroupInstances {
     override def combine(i1: Int, i2: Int): Int = i1 + i2
   }
 
+  // new Semigroup etc. creates an anonymous class
   implicit def stringSemigroup = new Semigroup[String] {
     override def combine(s1: String, s2: String): String = s1 + s2
   }
-}
-
-object Tests {
-  import SemigroupInstances._
 
   //find the instance of this type in the implicit scope
-  def SemigroupEvidence[T] = implicitly[Semigroup[T]]
-
-  assert(SemigroupEvidence.combine(1, 2) == 3)
-  assert(SemigroupEvidence.combine("a", "b") == "ab")
+  // This allows to not look for the value of the evidence directly but rather to ask for the evidence for a given type
+  def SemigroupEvidence[T: Semigroup] = implicitly[Semigroup[T]]
 }
