@@ -1,44 +1,49 @@
-import scala.collection.mutable.ArrayBuffer
+import java.util
 
-case class ImmutableRoseNode(id: Int, counter: Int, children: ArrayBuffer[ImmutableRoseNode])
+import scala.collection.mutable.{ArrayBuffer, Map => MutableMap}
+import java.util.HashMap
+import scala.collection.JavaConverters._
 
-class RoseNode(val id: Int, var counter: Int, val children: ArrayBuffer[RoseNode]) {
+case class ImmutableRoseNode(id: Int, counter: Int, children: Map[Int, ImmutableRoseNode])
+
+class RoseNode(val id: Int, var counter: Int, val children: util.HashMap[Int, RoseNode]) {
   def asValue: ImmutableRoseNode = {
     ImmutableRoseNode(
       id = id,
       counter = counter,
-      children = children.map(rn => rn.asValue)
+      children = children.asScala.map(c => c._1 -> c._2.asValue).toMap
     )
   }
 
-  def insert(path: Seq[Int]): Unit = {
-    path.headOption.foreach { page =>
-      val pageIndexInChildren = children.indexWhere(_.id == page)
-      if (pageIndexInChildren > -1) {
-        val existingRoseNode = children(pageIndexInChildren)
-        existingRoseNode.counter += 1
-        children(pageIndexInChildren).insert(path.tail)
+  def insert(path: util.List[Int]): Unit = {
+    if (path.size() > 0) {
+      val page = path.remove(0)
+      val existingRoseNode = children.get(page)
+      if (existingRoseNode == null) {
+        val node = new RoseNode(page, 1, new util.HashMap())
+        children.put(page, node)
+        node.insert(path) //insert in the new rosenode
       } else {
-        children += new RoseNode(page, 1, ArrayBuffer.empty)
-        children.last.insert(path.tail) //insert in the new rosenode
+        existingRoseNode.counter += 1
+        existingRoseNode.insert(path)
       }
     }
   }
-
 }
 
 object RoseNode {
-  def convert(paths: List[List[Int]], goal: Int): RoseNode = {
-    val rootNode = new RoseNode(goal, 0, ArrayBuffer.empty)
+  def convert(paths: Array[util.ArrayList[Int]], goal: Int): RoseNode = {
+    val rootNode = new RoseNode(goal, 0, new util.HashMap)
     paths.foreach{ path =>
-      val goalIndex = path.indexOf(rootNode.id)
+      val goalIndex = path.indexOf(goal)
+
       if (goalIndex > -1) {
-        val relevantPath = path.slice(0, goalIndex).reverse
+        val relevantPath = path.subList(0, goalIndex)
+        util.Collections.reverse(relevantPath)
         rootNode.counter += 1
         rootNode.insert(relevantPath)
       }
     }
     rootNode
   }
-
 }

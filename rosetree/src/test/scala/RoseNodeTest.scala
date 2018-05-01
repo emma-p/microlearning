@@ -1,18 +1,24 @@
-import org.scalacheck.Gen
-import org.scalacheck.Gen.posNum
-import org.scalatest.{FlatSpec, Matchers}
-import org.scalacheck.Prop.forAll
-import org.scalatest.prop.Checkers
+import java.util
 
-import scala.collection.mutable.ArrayBuffer
+import org.scalatest.prop.Checkers
+import org.scalatest.{FlatSpec, Matchers}
+
 
 class RoseNodeTest extends FlatSpec with Matchers with Checkers {
+  def arrayList[T](xs: T*) = {
+    val l = new util.ArrayList[T]()
+    xs.foreach(x => l.add(x))
+    l
+  }
+
+
   it should "convert a list of paths into a rosetree with counters" in {
-    val paths = List(List(123,1024,2048,456),
-      List(123,456,2048),
-      List(1000,456),
-      List(1000,457),
-      List(31,1000,456)
+    val paths = Array(
+      arrayList(123,1024,2048,456),
+      arrayList(123,456,2048),
+      arrayList(1000,456),
+      arrayList(1000,457),
+      arrayList(31,1000,456)
     )
 
     val goal = 456
@@ -22,33 +28,14 @@ class RoseNodeTest extends FlatSpec with Matchers with Checkers {
       ImmutableRoseNode(
         456,
         4,
-        ArrayBuffer(
-          ImmutableRoseNode(2048, 1, ArrayBuffer(ImmutableRoseNode(1024, 1, ArrayBuffer(ImmutableRoseNode(123, 1, ArrayBuffer()))))),
-          ImmutableRoseNode(123, 1, ArrayBuffer()),
-          ImmutableRoseNode(1000, 2, ArrayBuffer(ImmutableRoseNode(31, 1, ArrayBuffer())))
+        Map(
+          2048 -> ImmutableRoseNode(2048, 1, Map(1024 -> ImmutableRoseNode(1024, 1, Map(123 -> ImmutableRoseNode(123, 1, Map.empty))))),
+          123 -> ImmutableRoseNode(123, 1, Map.empty),
+          1000 -> ImmutableRoseNode(1000, 2, Map(31 -> ImmutableRoseNode(31, 1, Map.empty)))
         )
       )
     )
-
   }
-
-//  "benchmark" should "benchmark" in {
-//    val myGen: Gen[(List[List[Int]], Int)] =
-//      for {
-//        paths <- Gen.listOfN[List[Int]](1000,Gen.listOfN(1000, Gen.choose(1, 5000)))
-//        goal <- Gen.choose(1,5000)
-//      } yield (paths, goal)
-//
-//    check {
-//      forAll(myGen) { case (paths, goal) =>
-//        time {
-//          RoseNode.convert(paths, goal)
-//        }
-//        1 == 1
-//      }
-//
-//    }
-//  }
 
   def time[R](block: => R): R = {
     val t0 = System.currentTimeMillis()
